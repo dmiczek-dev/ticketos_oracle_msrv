@@ -9,13 +9,23 @@ const dotenv = require('dotenv');
 const logger = require('morgan');
 const cors = require('cors');
 const OracleDB = require('./src/db/oracle');
+//Scheduler
+const {
+  checkSomedTickets,
+  checkSomedSchedule,
+  checkDailySomedSchedule,
+} = require('./src/jobs/scheduler');
 
 //API
-const somedRoutes = require('./src/routes/somed');
-const kioskRoutes = require('./src/routes/kiosk');
+const scheduleRoutes = require('./src/routes/schedule');
+const ticketRoutes = require('./src/routes/ticket');
 dotenv.config();
 
-OracleDB.initOracleDB();
+OracleDB.initOracleDB().then(() => {
+  checkSomedTickets();
+  checkSomedSchedule();
+  checkDailySomedSchedule();
+});
 
 const corsOptions = {
   origin: process.env.CORS_ORIGIN,
@@ -25,8 +35,7 @@ const corsOptions = {
 
 global.io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN,
-    methods: ['GET', 'POST'],
+    origin: '*',
   },
 });
 
@@ -36,10 +45,10 @@ server.listen(process.env.PORT, () => {
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(cors(corsOptions));
+app.use(cors());
 
-app.use('/api', somedRoutes);
-app.use('/api', kioskRoutes);
+app.use('/api/v1', scheduleRoutes);
+app.use('/api/v1', ticketRoutes);
 
 // Exception handlers
 process.on('uncaughtException', (error) => {

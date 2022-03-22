@@ -1,1 +1,0 @@
-const oracledb = require('oracledb');
